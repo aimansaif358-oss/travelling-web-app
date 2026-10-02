@@ -4,14 +4,51 @@ import ActionButton from '../components/ActionButton'
 import AdminHome from './AdminHome'
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { Link,useNavigate } from "react-router-dom";
+import { supabase } from "../supabase";
+import { setUser } from "../redux/Slices/HomeDataSlice";
+
 
 
 function AdminLogin() {
   const [email, setEmail] = useState("Abc@gmail.com");
   const [password, setPassword] = useState("12345");
   const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  const Login = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,});
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      const user = data.user;
+      // Email verification check
+      if (!user.email_confirmed_at) {
+        alert("Please verify your email before logging in.");
+        await supabase.auth.signOut();
+        return;
+      }
+      // User role
+      const role = user.user_metadata?.role || "default";
+      // Save user in Redux
+      dispatch(
+        setUser({
+          id: user.id,
+          email: user.email,
+          role: "admin",
+        }));
+      // Navigate to Admin Dashboard
+      navigate("/admin/dashboard");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div style={{ backgroundImage: `url(${bg})`, height: '100vh', backgroundSize: 'cover', backgroundPosition: 'center', display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -87,7 +124,7 @@ function AdminLogin() {
               </span>
             </div>
           </div>
-          <ActionButton link="/AdminHome" title="Sign In to Dashboard" bgcolor="#6C4E49" color="white" />
+          <ActionButton link="/AdminHome" title="Sign In to Dashboard" bgcolor="#6C4E49" color="white" onClick={Login} />
           <p style={{ color: "white", marginTop: "20px", textAlign: "center" }}>
             Don't have an account?{" "}
             <Link
@@ -100,9 +137,6 @@ function AdminLogin() {
               Sign Up
             </Link>
           </p>
-
-
-
 
         </div>
 

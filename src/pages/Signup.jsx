@@ -4,7 +4,10 @@ import logo from "../assets/images/travel-logo.png";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import ActionButton from "../components/ActionButton";
+import { useDispatch } from "react-redux";
 import { supabase } from "../supabase";
+import { setUser } from "../redux/Slices/HomeDataSlice";
+
 
 function Signup() {
   const [name, setName] = useState("");
@@ -14,38 +17,87 @@ function Signup() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const dispatch = useDispatch();
+
+
   const signUp = async () => {
+    try {
+      // Check empty fields
+      if (!name || !email || !password || !confirmPassword) {
+        alert("Please fill all fields");
+        return;
+      }
 
-  // Check empty fields
-  if (!name || !email || !password || !confirmPassword) {
-    alert("Please fill all fields");
-    return;
-  }
+      // Check password match
+      if (password !== confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
 
-  // Check password match
-  if (password !== confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
+      // Signup with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: "admin",
+          },
+          emailRedirectTo: "http://localhost:3000",
+        },
+      });
 
-  // Signup with Supabase Auth
-  const { data, error } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    data: {
-      full_name: name,
-    },
-  },
-});
-   if (error) {
-    alert(error.message);
-    return;
-  }
-  alert("Account Created Successfully!");
+      if (error) {
+        throw error;
+      }
 
-  console.log(data);
-};
+      const user = data.user;
+
+      if (!user) {
+        throw new Error("User was not created");
+      }
+      // Save Admin in profiles table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            id: user.id,
+            full_name: name,
+            email: email,
+            role: "admin",
+          },
+        ]);
+
+      if (profileError) {
+        console.log("Profile Error:", profileError.message);
+      }
+
+      const reduxUser = {
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name,
+        role: "admin",
+      };
+
+      // dispatch(setUser(reduxUser));
+
+      console.log("User Saved:", reduxUser);
+
+      alert("Account created successfully!\nPlease verify your email before login.");
+
+      // Clear Form
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+
+    } catch (error) {
+      console.log("Signup Error:", error.message);
+      alert(error.message);
+    }
+  };
+
+
 
   return (
     <div
@@ -73,7 +125,7 @@ function Signup() {
             flexDirection: "column",
             alignItems: "center",
           }}>
-          <img src={logo} style={{ width: "40%" }}/>
+          <img src={logo} style={{ width: "40%" }} />
           <h2
             style={{
               color: "#c9c2c2",
@@ -91,7 +143,7 @@ function Signup() {
             placeholder="Enter Full Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={inputStyle}/>
+            style={inputStyle} />
 
           {/* Email */}
           <label style={{ color: "white", alignSelf: "flex-start" }}>
@@ -102,7 +154,7 @@ function Signup() {
             placeholder="Enter Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}/>
+            style={inputStyle} />
           {/* Password */}
           <label style={{ color: "white", alignSelf: "flex-start" }}>
             Password
@@ -111,9 +163,9 @@ function Signup() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter Password"
-              value={password}U
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={inputStyle}/>
+              style={inputStyle} />
 
             <span
               onClick={() => setShowPassword(!showPassword)}
@@ -136,7 +188,7 @@ function Signup() {
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              style={inputStyle}/>
+              style={inputStyle} />
             <span
               onClick={() =>
                 setShowConfirmPassword(!showConfirmPassword)
@@ -150,13 +202,14 @@ function Signup() {
               title="Create Account"
               bgcolor="#6C4E49"
               color="white"
-               onClick={signUp}/>
-             
+              onClick={signUp} />
+
           </div>
           <p
             style={{
               color: "white",
-              marginTop: "20px",}}>
+              marginTop: "20px",
+            }}>
             Already have an account?{" "}
             <Link
               to="/"
@@ -173,6 +226,9 @@ function Signup() {
     </div>
   );
 }
+
+
+
 
 const inputStyle = {
   width: "350px",

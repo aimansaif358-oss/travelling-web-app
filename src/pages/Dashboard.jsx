@@ -120,7 +120,7 @@ const tagStyle = {
         marginTop: "55px",
         paddingLeft: "20px",
         paddingRight: "20px",
-        display: "flex",
+        display: "flex", 
         flexDirection: "column",
         gap: "10px"
       }}>
@@ -204,7 +204,7 @@ const tagStyle = {
               padding: "20px",
               paddingBottom: "40px",
               color: "gray",
-              fontSize: "13px",
+              fontSize: "13px",   
               overflow: "hidden",
               borderRadius: "15px",
               boxShadow: "0px 2px 10px rgba(0,0,0,0.1)"

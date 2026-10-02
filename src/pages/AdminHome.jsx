@@ -1,9 +1,7 @@
-import React from 'react'
+import React from 'react';
 import { Link, Navigate, Route, Routes, NavLink } from 'react-router-dom';
-
 import icon from '../assets/images/icon-logo.png'
 import logo from '../assets/images/travel-logo.png'
-
 import { RiDashboardLine } from "react-icons/ri";
 import { LuUsersRound } from "react-icons/lu";
 import { MdCardTravel, MdOutlineGroups, MdAttachMoney } from "react-icons/md";
@@ -11,7 +9,7 @@ import { GoShield } from "react-icons/go";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { FaRegChartBar } from "react-icons/fa";
 import { IoSettingsOutline } from "react-icons/io5";
-
+import { FiLogOut } from "react-icons/fi";
 import Dashboard from './Dashboard';
 import User from './User';
 import Trips from './Trips';
@@ -22,12 +20,44 @@ import Notifications from './Notification';
 import Reports from './Reports';
 import Settings from './Settings';
 
+import PopularPlaces from './Popularplaces';
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { supabase } from "../supabase";
+import { setUser } from "../redux/Slices/HomeDataSlice";
+import { FaArrowLeft } from "react-icons/fa";
+
+
 function AdminHome() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Logut function
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      dispatch(setUser({}));
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const menuItems = [
     {
       name: 'Dashboard',
       path: 'Dashboard',
       icon: <RiDashboardLine />
+    },
+    {
+      name: "Popularplaces",
+      path: "Popularplaces",
+      icon: <IoSettingsOutline />
     },
     {
       name: "User",
@@ -69,7 +99,9 @@ function AdminHome() {
       path: "Settings",
       icon: <IoSettingsOutline />
     },
+
   ]
+  
   return (
     <div style={{
       display: "flex",
@@ -87,6 +119,7 @@ function AdminHome() {
         overflowY: "auto"
       }}>
 
+        {/* Logo */}
         <div style={{
           display: "flex",
           paddingTop: "20px",
@@ -137,7 +170,8 @@ function AdminHome() {
                   })} >
                   <span
                     style={{
-                      marginRight: "12px",}}>
+                      marginRight: "12px",
+                    }}>
                     {item.icon}
                   </span>
                   {item.name}
@@ -148,10 +182,11 @@ function AdminHome() {
 
         </div>
       </div>
-      <div style={{flex: 1, marginLeft: "200px", background: "rgba(9, 48, 86, 0.03)", minHeight: "100vh",}}>
+      <div style={{ flex: 1, marginLeft: "200px", background: "rgba(9, 48, 86, 0.03)", minHeight: "100vh", }}>
         <Routes>
           <Route path='/' element={<Navigate to={'/AdminHome/Dashboard'} />} />
           <Route path='Dashboard' element={<Dashboard />} />
+          <Route path='Popularplaces' element={<PopularPlaces />} />
           <Route path='User' element={<User />} />
           <Route path='Trips' element={<Trips />} />
           <Route path='Groups' element={<Groups />} />
@@ -162,12 +197,25 @@ function AdminHome() {
           <Route path='Settings' element={<Settings />} />
         </Routes>
       </div>
-
-
-
+      {/* LOGOUT — bottom of sidebar */}
+      <button
+        onClick={handleLogout}
+        style={{
+          background:"transparent",
+          border:"none",
+          position: "absolute",
+          bottom: "20px",
+          width: "160px",
+          color:"#c9c2c2" ,
+          cursor: "pointer",
+          display: "flex",
+          gap: "8px",
+          fontSize: "15px",
+          fontWeight: "400"
+        }}>
+        <FiLogOut />
+        Logout</button>
     </div>
-
-
 
   )
 }
